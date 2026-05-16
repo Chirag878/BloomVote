@@ -4,16 +4,17 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { ToastProvider } from "./context/ToastContext.jsx";
+import { HashRouter } from "react-router-dom";
 import "./index.css";
 
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <HashRouter>
       <ToastProvider>
         <AuthProvider>
           <App />
         </AuthProvider>
       </ToastProvider>
-    </BrowserRouter>
+    </HashRouter>
   </React.StrictMode>,
 );
