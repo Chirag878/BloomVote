@@ -16,7 +16,7 @@ const app = express();
 
 const allowedOrigins = new Set([
     ...env.CLIENT_URL.split(",").map((origin) => origin.trim()).filter(Boolean),
-    ...(env.isDev() ? ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "http://127.0.0.1:5174"] : []),
+    ...(env.isDev() ? ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "http://127.0.0.1:5174"] : [env.CLIENT_URL]),
 ]);
 
 app.set("trust proxy", 1);
