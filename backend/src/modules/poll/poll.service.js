@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import crypto from "crypto";
 import Poll from "../../models/poll.model.js";
 import Vote from "../../models/vote.model.js";
 import User from "../../models/user.model.js";
@@ -34,6 +35,7 @@ const createPoll = async (creatorId, payload) => {
     const poll = await Poll.create({
         ...payload,
         creator: creatorId,
+        shareSlug: crypto.randomUUID(),
     });
 
     await User.findByIdAndUpdate(creatorId, { $inc: { pollsCreated: 1 } });
@@ -46,6 +48,7 @@ const createPoll = async (creatorId, payload) => {
 const getPolls = async (query = {}) => {
     const { page, limit, skip } = getPagination(query);
     const filter = {};
+    filter.visibility = "public";
 
     if (query.category) filter.category = query.category;
     if (query.creator) filter.creator = query.creator;
@@ -83,6 +86,15 @@ const getPollById = async (pollId) => {
         .lean();
 
     if (!poll) throw ApiError.notFound("Poll not found");
+    await normalizePollState(poll);
+    return decorateOptionStats(poll);
+};
+
+const getPollByShareSlug = async (shareSlug) => {
+    const poll = await Poll.findOne({ shareSlug, visibility: "public" })
+        .populate("creator", "userName avatar")
+        .lean();
+    if (!poll) throw ApiError.notFound("Shared poll not found");
     await normalizePollState(poll);
     return decorateOptionStats(poll);
 };
@@ -204,4 +216,4 @@ const formatHour = (hour) => {
     return `${hour - 12} PM`;
 };
 
-export { createPoll, getPolls, getPollById, updatePoll, getPollAnalytics, deletePoll };
+export { createPoll, getPolls, getPollById, getPollByShareSlug, updatePoll, getPollAnalytics, deletePoll };

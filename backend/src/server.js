@@ -14,16 +14,41 @@ import { errorHandler, notFound } from "./common/middleware/error.middleware.js"
 
 const app = express();
 
-const allowedOrigins = new Set([
-    ...env.CLIENT_URL.split(",").map((origin) => origin.trim()).filter(Boolean),
-    ...(env.isDev() ? ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "http://127.0.0.1:5174"] : []),
-]);
+const configuredOrigins = env.CLIENT_URL
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+const fallbackOrigins = env.isDev()
+    ? ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "http://127.0.0.1:5174"]
+    : [];
+
+const allowedOriginRules = [...configuredOrigins, ...fallbackOrigins];
+
+const originAllowed = (requestOrigin) => {
+    if (!requestOrigin) return true;
+
+    return allowedOriginRules.some((rule) => {
+        if (!rule) return false;
+        if (rule === requestOrigin) return true;
+
+        // wildcard support, e.g. https://*.vercel.app
+        if (rule.includes("*")) {
+            const escaped = rule
+                .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
+                .replace(/\*/g, ".*");
+            return new RegExp(`^${escaped}$`).test(requestOrigin);
+        }
+
+        return false;
+    });
+};
 
 app.set("trust proxy", 1);
 app.use(helmet());
 app.use(cors({
     origin(origin, callback) {
-        if (!origin || allowedOrigins.has(origin)) return callback(null, true);
+        if (originAllowed(origin)) return callback(null, true);
         return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,

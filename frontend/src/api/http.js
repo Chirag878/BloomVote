@@ -1,6 +1,17 @@
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+const buildFallbackApiUrl = () => {
+  if (typeof window === "undefined") return "http://localhost:5000/api";
+
+  const host = window.location.hostname;
+  const isLocal = host === "localhost" || host === "127.0.0.1";
+
+  if (isLocal) return "http://localhost:5000/api";
+
+  return `${window.location.origin}/api`;
+};
+
+const API_URL = import.meta.env.VITE_API_URL || buildFallbackApiUrl();
 const TOKEN_KEY = "bloomvote_access_token";
 const USER_KEY = "bloomvote_user";
 
