@@ -17,6 +17,11 @@ const getPollById = asyncHandler(async (req, res) => {
     return ApiResponse.ok(res, "Poll retrieved successfully", poll);
 });
 
+const getPollByShareSlug = asyncHandler(async (req, res) => {
+    const poll = await pollService.getPollByShareSlug(req.params.shareSlug);
+    return ApiResponse.ok(res, "Shared poll retrieved successfully", poll);
+});
+
 const updatePoll = asyncHandler(async (req, res) => {
     const poll = await pollService.updatePoll(req.params.pollId, req.user, req.body);
     return ApiResponse.ok(res, "Poll updated successfully", poll);
@@ -32,4 +37,4 @@ const getPollAnalytics = asyncHandler(async (req, res) => {
     return ApiResponse.ok(res, "Poll analytics retrieved successfully", analytics);
 });
 
-export { createPoll, getPolls, getPollById, updatePoll, deletePoll, getPollAnalytics };
+export { createPoll, getPolls, getPollById, getPollByShareSlug, updatePoll, deletePoll, getPollAnalytics };

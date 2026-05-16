@@ -7,6 +7,7 @@ import { CreatePollDto, UpdatePollDto } from "./dto/poll.dto.js";
 const router = Router();
 
 router.get("/", controller.getPolls);
+router.get("/share/:shareSlug", controller.getPollByShareSlug);
 router.post("/", authenticate, validate(CreatePollDto), controller.createPoll);
 router.get("/:pollId", controller.getPollById);
 router.patch("/:pollId", authenticate, validate(UpdatePollDto), controller.updatePoll);
