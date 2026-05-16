@@ -64,10 +64,12 @@ app.use("/api/analytics", analyticsRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-await connectDB();
-
-app.listen(env.PORT, () => {
-    console.log(`Server is running on port ${env.PORT}`);
+const PORT = env.PORT || 5000;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+    connectDB();
 });
+
+
 
 export default app;
