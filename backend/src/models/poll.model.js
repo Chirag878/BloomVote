@@ -46,6 +46,18 @@ const pollSchema = new mongoose.Schema({
         default:true,
         index:true
     },
+    visibility: {
+        type: String,
+        enum: ["public", "private"],
+        default: "public",
+        index: true,
+    },
+    shareSlug: {
+        type: String,
+        unique: true,
+        index: true,
+        sparse: true,
+    },
     expiresAt:{
         type:Date,
         default: () => new Date(Date.now() + 7*24*60*60*1000), // Default to 7 days from creation

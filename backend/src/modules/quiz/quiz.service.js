@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import crypto from "crypto";
 import Quiz from "../../models/quiz.model.js";
 import Question from "../../models/question.model.js";
 import QuizAttempt from "../../models/quizAttempt.model.js";
@@ -37,7 +38,7 @@ const sanitizeQuestions = (questions, includeAnswers = false) => {
 };
 
 const createQuiz = async (creatorId, payload) => {
-    const quiz = await Quiz.create({ ...payload, creator: creatorId });
+    const quiz = await Quiz.create({ ...payload, creator: creatorId, shareSlug: crypto.randomUUID() });
     await User.findByIdAndUpdate(creatorId, { $inc: { quizzesCreated: 1 } });
 
     return Quiz.findById(quiz._id)
@@ -50,7 +51,10 @@ const getQuizzes = async (query = {}, requester = null) => {
     const filter = {};
 
     if (query.mine === "true" && requester) filter.creator = requester.id;
-    if (!filter.creator) filter.isPublished = true;
+    if (!filter.creator) {
+        filter.isPublished = true;
+        filter.visibility = "public";
+    }
     if (query.category) filter.category = query.category;
     if (query.search) {
         filter.$or = [
@@ -85,8 +89,16 @@ const getQuizById = async (quizId, requester) => {
 
     if (!quiz) throw ApiError.notFound("Quiz not found");
     const canManage = isOwnerOrAdmin(quiz, requester);
-    if (!quiz.isPublished && !canManage) throw ApiError.forbidden("This quiz is not published");
+    if ((!quiz.isPublished || quiz.visibility === "private") && !canManage) throw ApiError.forbidden("This quiz is not accessible");
 
+    return quiz;
+};
+
+const getQuizByShareSlug = async (shareSlug) => {
+    const quiz = await Quiz.findOne({ shareSlug, isPublished: true, visibility: "public" })
+        .populate("creator", "userName avatar")
+        .lean();
+    if (!quiz) throw ApiError.notFound("Shared quiz not found");
     return quiz;
 };
 
@@ -326,6 +338,7 @@ export {
     createQuiz,
     getQuizzes,
     getQuizById,
+    getQuizByShareSlug,
     updateQuiz,
     deleteQuiz,
     addQuestion,

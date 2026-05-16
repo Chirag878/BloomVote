@@ -33,6 +33,18 @@ const quizSchema = new mongoose.Schema({
         type:Boolean,
         default:false, 
     },
+    visibility: {
+        type: String,
+        enum: ["public", "private"],
+        default: "public",
+        index: true,
+    },
+    shareSlug: {
+        type: String,
+        unique: true,
+        index: true,
+        sparse: true,
+    },
     totalQuestions:{
         type:Number,
         default:0 

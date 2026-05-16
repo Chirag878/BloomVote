@@ -18,8 +18,13 @@ const getMyQuizzes = asyncHandler(async (req, res) => {
 });
 
 const getQuizById = asyncHandler(async (req, res) => {
-    const quiz = await quizService.getQuizById(req.params.quizId, req.user);
+    const quiz = await quizService.getQuizById(req.params.quizId, req.user || null);
     return ApiResponse.ok(res, "Quiz retrieved successfully", quiz);
+});
+
+const getQuizByShareSlug = asyncHandler(async (req, res) => {
+    const quiz = await quizService.getQuizByShareSlug(req.params.shareSlug);
+    return ApiResponse.ok(res, "Shared quiz retrieved successfully", quiz);
 });
 
 const updateQuiz = asyncHandler(async (req, res) => {
@@ -67,6 +72,7 @@ export {
     getQuizzes,
     getMyQuizzes,
     getQuizById,
+    getQuizByShareSlug,
     updateQuiz,
     deleteQuiz,
     addQuestion,
