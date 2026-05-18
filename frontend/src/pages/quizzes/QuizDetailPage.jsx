@@ -1,14 +1,17 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { BarChart3, Clock, PlayCircle, Share2 } from "lucide-react";
 import quizzesApi from "../../api/quizzes.js";
 import Button from "../../components/ui/Button.jsx";
 import { ErrorState, LoadingState } from "../../components/ui/StateBlock.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
+import { useAuth } from "../../context/AuthContext.jsx";
 import { getErrorMessage, useAsync } from "../../hooks/useAsync.js";
 
 const QuizDetailPage = () => {
   const { quizId } = useParams();
   const { showToast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const quizState = useAsync(() => quizzesApi.get(quizId), [quizId]);
   const questionState = useAsync(() => quizzesApi.questions(quizId), [quizId]);
 
@@ -26,6 +29,30 @@ const QuizDetailPage = () => {
       showToast({ type: "success", title: "Link copied", message: "Share this quiz link with others." });
     } catch (err) {
       showToast({ type: "error", title: "Copy failed", message: "Could not copy the link. Please copy it manually." });
+    }
+  };
+
+  const canManage = !!user && (quiz?.creator?._id === user._id || user.role === "admin");
+
+  const handleDeleteQuiz = async () => {
+    if (!confirm("Delete this quiz? This action cannot be undone.")) return;
+    try {
+      await quizzesApi.remove(quiz._id);
+      showToast({ type: "success", title: "Quiz deleted" });
+      navigate("/quizzes");
+    } catch (err) {
+      showToast({ type: "error", title: "Delete failed", message: getErrorMessage(err) });
+    }
+  };
+
+  const handleToggleVisibility = async () => {
+    try {
+      const newVisibility = quiz.visibility === "public" ? "private" : "public";
+      await quizzesApi.update(quiz._id, { visibility: newVisibility });
+      showToast({ type: "success", title: "Visibility updated" });
+      await quizState.execute();
+    } catch (err) {
+      showToast({ type: "error", title: "Update failed", message: getErrorMessage(err) });
     }
   };
 
@@ -48,6 +75,16 @@ const QuizDetailPage = () => {
           <Button type="button" variant="secondary" icon={Share2} onClick={handleCopyShareLink}>
             Share quiz
           </Button>
+          {canManage ? (
+            <>
+              <Button type="button" variant="ghost" onClick={handleToggleVisibility}>
+                {quiz.visibility === "public" ? "Make private" : "Make public"}
+              </Button>
+              <Button type="button" variant="danger" onClick={handleDeleteQuiz}>
+                Delete quiz
+              </Button>
+            </>
+          ) : null}
         </div>
         <div className="mt-5 grid gap-3 md:grid-cols-[1fr_auto] items-center">
           <input

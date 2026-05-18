@@ -35,5 +35,5 @@ export const COOKIE_OPTIONS = Object.freeze({
     httpOnly: true,
     secure:   env.isProd(),
     sameSite: env.isProd() ? "none" : "lax",
-    maxAge:   7 * 24 * 60 * 60 * 1000, // 7 days in ms
+    maxAge:   7 * 24 * 60 * 60 * 1000,
 });

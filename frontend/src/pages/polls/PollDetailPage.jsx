@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { BarChart3, CheckCircle2, Share2, Vote } from "lucide-react";
 import pollsApi from "../../api/polls.js";
 import votesApi from "../../api/votes.js";
@@ -7,11 +7,14 @@ import Button from "../../components/ui/Button.jsx";
 import ProgressBar from "../../components/ui/ProgressBar.jsx";
 import { ErrorState, LoadingState } from "../../components/ui/StateBlock.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
+import { useAuth } from "../../context/AuthContext.jsx";
 import { getErrorMessage, useAsync } from "../../hooks/useAsync.js";
 
 const PollDetailPage = () => {
   const { pollId } = useParams();
   const { showToast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [selectedOption, setSelectedOption] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const pollState = useAsync(() => pollsApi.get(pollId), [pollId]);
@@ -50,6 +53,30 @@ const PollDetailPage = () => {
     }
   };
 
+  const canManage = !!user && (poll?.creator?._id === user._id || user.role === "admin");
+
+  const handleDeletePoll = async () => {
+    if (!confirm("Delete this poll? This action cannot be undone.")) return;
+    try {
+      await pollsApi.remove(poll._id);
+      showToast({ type: "success", title: "Poll deleted" });
+      navigate("/polls");
+    } catch (err) {
+      showToast({ type: "error", title: "Delete failed", message: getErrorMessage(err) });
+    }
+  };
+
+  const handleToggleVisibility = async () => {
+    try {
+      const newVisibility = poll.visibility === "public" ? "private" : "public";
+      await pollsApi.update(poll._id, { visibility: newVisibility });
+      showToast({ type: "success", title: "Visibility updated" });
+      await pollState.execute();
+    } catch (err) {
+      showToast({ type: "error", title: "Update failed", message: getErrorMessage(err) });
+    }
+  };
+
   if (pollState.loading) return <LoadingState label="Loading poll" />;
   if (pollState.error) return <ErrorState message={pollState.error} />;
 
@@ -65,6 +92,16 @@ const PollDetailPage = () => {
             <Link to={`/polls/${poll._id}/analytics`}>
               <Button variant="secondary" icon={BarChart3}>Analytics</Button>
             </Link>
+            {canManage ? (
+              <>
+                <Button type="button" variant="ghost" onClick={handleToggleVisibility}>
+                  {poll.visibility === "public" ? "Make private" : "Make public"}
+                </Button>
+                <Button type="button" variant="danger" onClick={handleDeletePoll}>
+                  Delete poll
+                </Button>
+              </>
+            ) : null}
           </div>
         </div>
         <h1 className="mt-5 font-display text-4xl font-bold leading-tight text-ink">{poll.question}</h1>
