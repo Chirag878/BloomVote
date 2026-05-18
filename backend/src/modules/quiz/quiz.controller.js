@@ -1,4 +1,5 @@
 import * as quizService from "./quiz.service.js";
+import ApiError from "../../common/utils/api-error.js";
 import ApiResponse from "../../common/utils/api-response.js";
 import asyncHandler from "../../common/utils/async-handler.js";
 
@@ -53,7 +54,9 @@ const publishQuiz = asyncHandler(async (req, res) => {
 });
 
 const submitAttempt = asyncHandler(async (req, res) => {
-    const result = await quizService.submitAttempt(req.params.quizId, req.user.id, req.body);
+    const userId = req.user?.id;
+    if (!userId) throw ApiError.unauthorized("Authentication required");
+    const result = await quizService.submitAttempt(req.params.quizId, userId, req.body);
     return ApiResponse.created(res, "Quiz attempt submitted successfully", result);
 });
 

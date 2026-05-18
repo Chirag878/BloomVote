@@ -163,6 +163,11 @@ const publishQuiz = async (quizId, requester) => {
 };
 
 const submitAttempt = async (quizId, userId, payload) => {
+    if (!userId) throw ApiError.unauthorized("Authentication required");
+    if (!payload?.answers || !Array.isArray(payload.answers)) {
+        throw ApiError.badRequest("Answers must be provided as an array");
+    }
+
     const quiz = await Quiz.findById(quizId).lean();
     if (!quiz) throw ApiError.notFound("Quiz not found");
     if (!quiz.isPublished) throw ApiError.badRequest("Quiz is not published");
