@@ -53,13 +53,13 @@ const AuthProvider = ({ children }) => {
 
   const login = async (payload) => {
     const response = await authApi.login(payload);
-    persistSession(response.data);
+    persistSession(response);
     return response;
   };
 
   const register = async (payload) => {
     const response = await authApi.register(payload);
-    persistSession(response.data);
+    persistSession(response);
     return response;
   };
 
