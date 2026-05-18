@@ -43,8 +43,8 @@ const AuthProvider = ({ children }) => {
   }, []);
 
   const persistSession = (payload) => {
-    const nextUser = payload.user;
-    const nextToken = payload.accessToken;
+    const nextUser = payload.data?.user;
+    const nextToken = payload.data?.accessToken;
     setUser(nextUser);
     setToken(nextToken);
     setStoredUser(nextUser);
