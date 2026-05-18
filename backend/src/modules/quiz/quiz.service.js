@@ -9,6 +9,7 @@ import { ROLES } from "../../common/constants.js";
 import { getPagination, buildMeta } from "../../common/utils/pagination.js";
 
 const isOwnerOrAdmin = (resource, requester) => {
+    if (!requester) return false;
     const creatorId = resource.creator?._id || resource.creator;
     return creatorId?.toString() === requester.id?.toString() || requester.role === ROLES.ADMIN;
 };
