@@ -1,12 +1,14 @@
 import { Link, useParams } from "react-router-dom";
-import { BarChart3, Clock, PlayCircle } from "lucide-react";
+import { BarChart3, Clock, PlayCircle, Share2 } from "lucide-react";
 import quizzesApi from "../../api/quizzes.js";
 import Button from "../../components/ui/Button.jsx";
 import { ErrorState, LoadingState } from "../../components/ui/StateBlock.jsx";
-import { useAsync } from "../../hooks/useAsync.js";
+import { useToast } from "../../context/ToastContext.jsx";
+import { getErrorMessage, useAsync } from "../../hooks/useAsync.js";
 
 const QuizDetailPage = () => {
   const { quizId } = useParams();
+  const { showToast } = useToast();
   const quizState = useAsync(() => quizzesApi.get(quizId), [quizId]);
   const questionState = useAsync(() => quizzesApi.questions(quizId), [quizId]);
 
@@ -16,6 +18,16 @@ const QuizDetailPage = () => {
 
   const quiz = quizState.data?.data;
   const questions = questionState.data?.data || [];
+  const shareUrl = `${window.location.origin}/quizzes/${quiz._id}`;
+
+  const handleCopyShareLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      showToast({ type: "success", title: "Link copied", message: "Share this quiz link with others." });
+    } catch (err) {
+      showToast({ type: "error", title: "Copy failed", message: "Could not copy the link. Please copy it manually." });
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -33,7 +45,22 @@ const QuizDetailPage = () => {
             <Link to={`/quizzes/${quiz._id}/attempt`}><Button icon={PlayCircle}>Start attempt</Button></Link>
           ) : null}
           <Link to={`/quizzes/${quiz._id}/analytics`}><Button variant="secondary" icon={BarChart3}>Analytics</Button></Link>
+          <Button type="button" variant="secondary" icon={Share2} onClick={handleCopyShareLink}>
+            Share quiz
+          </Button>
         </div>
+        <div className="mt-5 grid gap-3 md:grid-cols-[1fr_auto] items-center">
+          <input
+            type="text"
+            readOnly
+            value={shareUrl}
+            className="field bg-white text-sm text-ink"
+          />
+          <Button type="button" icon={Share2} onClick={handleCopyShareLink}>
+            Copy link
+          </Button>
+        </div>
+        <p className="mt-2 text-sm text-moss">Share this quiz link so people can open it and attempt the quiz.</p>
       </section>
 
       <section className="grid gap-4 md:grid-cols-3">

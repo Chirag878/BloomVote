@@ -150,7 +150,7 @@ const getPollAnalytics = async (pollId, requester) => {
             isLeading: index === 0 && option.voteCount > 0,
         }));
 
-    const [votingTrends, hourlyTrends, uniqueVoters] = await Promise.all([
+    const [votingTrends, hourlyTrends, uniqueVoters, votes] = await Promise.all([
         Vote.aggregate([
             { $match: { poll: objectId } },
             {
@@ -170,6 +170,7 @@ const getPollAnalytics = async (pollId, requester) => {
             { $project: { _id: 0, hour: "$_id", votes: 1 } },
         ]),
         Vote.distinct("voter", { poll: objectId }),
+        Vote.find({ poll: objectId }).populate("voter", "userName email").sort({ createdAt: -1 }).lean(),
     ]);
 
     const peakHour = hourlyTrends[0]
@@ -179,6 +180,15 @@ const getPollAnalytics = async (pollId, requester) => {
             votes: hourlyTrends[0].votes,
         }
         : null;
+
+    const optionTextById = Object.fromEntries(poll.options.map((option) => [option._id.toString(), option.text]));
+    const voteRecords = votes.map((vote) => ({
+        _id: vote._id,
+        voter: vote.voter ? { _id: vote.voter._id, userName: vote.voter.userName, email: vote.voter.email } : null,
+        optionId: vote.optionId,
+        optionText: optionTextById[vote.optionId.toString()] || "Unknown option",
+        createdAt: vote.createdAt,
+    }));
 
     const now = new Date();
     const ageInHours = Math.max(Math.floor((now - new Date(poll.createdAt)) / (1000 * 60 * 60)), 1);
@@ -206,6 +216,7 @@ const getPollAnalytics = async (pollId, requester) => {
         options,
         votingTrends,
         peakHour,
+        votes: voteRecords,
     };
 };
 

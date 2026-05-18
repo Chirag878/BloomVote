@@ -66,6 +66,24 @@ const PollAnalyticsPage = () => {
           </div>
         </div>
       </section>
+
+      <section className="petal-card p-5">
+        <p className="label">Voter tracking</p>
+        <div className="mt-5 space-y-4">
+          {analytics?.votes?.length ? analytics.votes.map((vote) => (
+            <div key={vote._id} className="border border-leaf-100 bg-white/70 p-4" style={{ borderRadius: 8 }}>
+              <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="font-bold text-ink">{vote.voter?.userName || "Anonymous"}</p>
+                  <p className="text-sm text-moss">{vote.voter?.email || "No email"}</p>
+                </div>
+                <p className="text-sm font-bold text-moss">{new Date(vote.createdAt).toLocaleString()}</p>
+              </div>
+              <p className="text-sm text-ink">Selected option: <span className="font-semibold text-ink">{vote.optionText}</span></p>
+            </div>
+          )) : <p className="text-sm text-moss">No votes have been recorded for this poll yet.</p>}
+        </div>
+      </section>
     </div>
   );
 };
