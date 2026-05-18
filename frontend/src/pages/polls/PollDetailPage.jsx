@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { BarChart3, CheckCircle2, Vote } from "lucide-react";
+import { BarChart3, CheckCircle2, Share2, Vote } from "lucide-react";
 import pollsApi from "../../api/polls.js";
 import votesApi from "../../api/votes.js";
 import Button from "../../components/ui/Button.jsx";
@@ -20,6 +20,17 @@ const PollDetailPage = () => {
   const poll = pollState.data?.data;
   const votedOptionIds = useMemo(() => new Set((voteState.data?.data || []).map((vote) => vote.optionId)), [voteState.data]);
   const hasVoted = votedOptionIds.size > 0;
+  const shareUrl = poll ? `${window.location.origin}/polls/${poll._id}` : "";
+
+  const handleCopyShareLink = async () => {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      showToast({ type: "success", title: "Link copied", message: "Share this poll URL with your team." });
+    } catch (err) {
+      showToast({ type: "error", title: "Copy failed", message: "Could not copy the link. Please copy it manually." });
+    }
+  };
 
   const handleVote = async () => {
     if (!selectedOption) {
@@ -47,14 +58,32 @@ const PollDetailPage = () => {
       <section className="shell-panel p-6 md:p-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <span className="bg-leaf-50 px-3 py-1 text-xs font-bold text-leaf-700" style={{ borderRadius: 8 }}>{poll.category}</span>
-          <Link to={`/polls/${poll._id}/analytics`}>
-            <Button variant="secondary" icon={BarChart3}>Analytics</Button>
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Button type="button" variant="secondary" icon={Share2} onClick={handleCopyShareLink}>
+              Share poll
+            </Button>
+            <Link to={`/polls/${poll._id}/analytics`}>
+              <Button variant="secondary" icon={BarChart3}>Analytics</Button>
+            </Link>
+          </div>
         </div>
         <h1 className="mt-5 font-display text-4xl font-bold leading-tight text-ink">{poll.question}</h1>
         <p className="mt-3 text-moss">
           {poll.creator?.userName || "Unknown creator"} · {poll.totalVotes || 0} votes · {poll.isActive ? "Active" : "Closed"}
         </p>
+
+        <div className="mt-5 grid gap-3 md:grid-cols-[1fr_auto] items-center">
+          <input
+            type="text"
+            readOnly
+            value={shareUrl}
+            className="field bg-white text-sm text-ink"
+          />
+          <Button type="button" icon={Share2} onClick={handleCopyShareLink}>
+            Copy link
+          </Button>
+        </div>
+        <p className="mt-2 text-sm text-moss">Share this poll link so more users can open it and vote.</p>
       </section>
 
       <section className="grid gap-4">
